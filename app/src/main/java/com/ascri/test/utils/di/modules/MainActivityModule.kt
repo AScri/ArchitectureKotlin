@@ -1,6 +1,7 @@
 package com.ascri.test.utils.di.modules
 
 import androidx.lifecycle.ViewModel
+import com.ascri.test.ui.main.CustomIndicatorFragment
 import com.ascri.test.ui.main.MainFragment
 import com.ascri.test.ui.main.MainViewModel
 import com.ascri.test.utils.di.factory.ViewModelKey
@@ -14,6 +15,9 @@ abstract class MainActivityModule {
 
     @ContributesAndroidInjector
     internal abstract fun mainFragment(): MainFragment
+
+    @ContributesAndroidInjector
+    internal abstract fun customIndicatorFragment(): CustomIndicatorFragment
 
     @Binds
     @IntoMap

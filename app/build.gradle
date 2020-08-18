@@ -34,6 +34,16 @@ android {
         jvmTarget = "1.8"
     }
 
+
+
+}
+kapt {
+    arguments {
+        arg("argumentIncremental", 'true')
+    }
+
+    correctErrorTypes = true
+
 }
 
 dependencies {
@@ -51,11 +61,11 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     //Dagger 2
-    implementation "com.google.dagger:dagger:2.25.2"
-    implementation "com.google.dagger:dagger-android:2.25.2"
-    implementation "com.google.dagger:dagger-android-support:2.25.2"
-    kapt "com.google.dagger:dagger-compiler:2.25.2"
-    kapt "com.google.dagger:dagger-android-processor:2.25.2"
+    implementation "com.google.dagger:dagger:2.27"
+    implementation "com.google.dagger:dagger-android:2.27"
+    implementation "com.google.dagger:dagger-android-support:2.27"
+    kapt "com.google.dagger:dagger-compiler:2.27"
+    kapt "com.google.dagger:dagger-android-processor:2.27"
 
     //Retrofit + Jackson
     implementation 'com.squareup.retrofit2:retrofit:2.6.2'

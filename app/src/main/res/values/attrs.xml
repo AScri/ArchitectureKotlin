@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ProgressIndicator">
+        <attr name="dateFontSize" format="dimension" />
+        <attr name="nameFontSize" format="dimension" />
+        <attr name="circleRadius" format="dimension" />
+        <attr name="lineWidth" format="dimension" />
+        <attr name="imageSize" format="dimension" />
+        <attr name="itemVerticalPadding" format="dimension" />
+        <attr name="lineColorSelected" format="color" />
+        <attr name="textColor" format="color" />
+        <attr name="lineColorUnSelected" format="color" />
+        <attr name="circleColor" format="color" />
+    </declare-styleable>
+</resources>
