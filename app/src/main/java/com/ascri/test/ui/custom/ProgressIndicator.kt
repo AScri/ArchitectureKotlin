@@ -2,6 +2,7 @@ package com.ascri.test.ui.custom
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,8 +11,10 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
+import androidx.core.view.drawToBitmap
 import com.ascri.test.R
 import com.ascri.test.utils.extensions.dpToPx
 import com.ascri.test.utils.extensions.spToPx
@@ -28,7 +31,9 @@ class ProgressIndicator @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
     private var indicatorList = listOf<IndicatorModel>()
     private var indicatorDrawableList = listOf<Drawable>()
+    private var bgBitmap: Bitmap? = null
     private var selectedIndex = -1
+    private var progress = -2
     private val linePaint = Paint()
     private val datePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val namePaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -141,61 +146,69 @@ class ProgressIndicator @JvmOverloads constructor(
         val halfHeight = (height / 2).toFloat()
         val partWidth = ((width - paddingStart - paddingEnd) / (indicatorList.size + 1)).toFloat()
 
-        //draw lines
-        for (index in 0..indicatorList.size) {
-            linePaint.color =
-                if (index <= selectedIndex) lineColorSelected
-                else lineColorUnSelected
+        if (bgBitmap == null) {
+            //draw images
+            indicatorDrawableList.forEachIndexed { index, drawable ->
+                val left = (((index + 1) * partWidth) + paddingStart) - imageSize / 2
+                val top = halfHeight - imageSize - itemVerticalPadding
+                drawable.setBounds(
+                    left.toInt(),
+                    top.toInt(),
+                    (left + imageSize).toInt(),
+                    (top + imageSize).toInt()
+                )
+                drawable.draw(canvas)
+            }
+            //draw names and dates
+            indicatorList.forEachIndexed { index, item ->
+                val nameWidth = namePaint.measureText(item.name)
+                val nameY = halfHeight + itemVerticalPadding + nameFontSize
+                val dateWidth = datePaint.measureText(item.dateString)
+                canvas.drawText(
+                    item.name,
+                    ((index + 1) * partWidth) + paddingStart - nameWidth / 2,
+                    nameY,
+                    namePaint
+                )
+                canvas.drawText(
+                    item.dateString,
+                    ((index + 1) * partWidth) + paddingStart - dateWidth / 2,
+                    nameY + itemVerticalPadding / 2 + dateFontSize,
+                    datePaint
+                )
+            }
+        } else {
+            canvas.drawBitmap(bgBitmap!!, 0f, 0f, null)
+            //draw lines
+            linePaint.color = lineColorUnSelected
             canvas.drawLine(
-                (index * partWidth) + paddingStart,
+                (progress * partWidth) + paddingStart,
                 halfHeight,
-                ((index + 1) * partWidth) + paddingStart,
+                ((indicatorList.size + 1) * partWidth) + paddingStart,
                 halfHeight,
                 linePaint
             )
-        }
+            for (index in 0..indicatorList.size) {
+                linePaint.color = lineColorSelected
+                canvas.drawLine(
+                    (progress * partWidth) + paddingStart,
+                    halfHeight,
+                    ((progress + 1) * partWidth) + paddingStart,
+                    halfHeight,
+                    linePaint
+                )
+            }
 
-        //draw dots
-        for (index in indicatorList.indices) {
-            linePaint.color = circleColor
-            canvas.drawCircle(
-                ((index + 1) * partWidth) + paddingStart,
-                halfHeight,
-                circleRadius.toFloat(),
-                linePaint
-            )
-        }
-
-        //draw images
-        indicatorDrawableList.forEachIndexed { index, drawable ->
-            val left = (((index + 1) * partWidth) + paddingStart) - imageSize / 2
-            val top = halfHeight - imageSize - itemVerticalPadding
-            drawable.setBounds(
-                left.toInt(),
-                top.toInt(),
-                (left + imageSize).toInt(),
-                (top + imageSize).toInt()
-            )
-            drawable.draw(canvas)
-        }
-
-        //draw names and dates
-        indicatorList.forEachIndexed { index, item ->
-            val nameWidth = namePaint.measureText(item.name)
-            val nameY = halfHeight + itemVerticalPadding + nameFontSize
-            val dateWidth = datePaint.measureText(item.dateString)
-            canvas.drawText(
-                item.name,
-                ((index + 1) * partWidth) + paddingStart - nameWidth / 2,
-                nameY,
-                namePaint
-            )
-            canvas.drawText(
-                item.dateString,
-                ((index + 1) * partWidth) + paddingStart - dateWidth / 2,
-                nameY + itemVerticalPadding / 2 + dateFontSize,
-                datePaint
-            )
+            //draw dots
+            for (index in indicatorList.indices) {
+                linePaint.color = circleColor
+                canvas.drawCircle(
+                    ((index + 1) * partWidth) + paddingStart,
+                    halfHeight,
+                    circleRadius.toFloat(),
+                    linePaint
+                )
+            }
         }
     }
 
@@ -218,23 +231,23 @@ class ProgressIndicator @JvmOverloads constructor(
         super.onRestoreInstanceState(localState)
     }
 
-    private fun setProgress(index: Int, animate: Boolean) {
+    private fun setProgress(index: Int, animate: Boolean, progress: Int = 0) {
         if (animate) {
-//            barAnimator = ValueAnimator.ofFloat(0f, 1f)
-//            barAnimator?.duration = 700
-//
-//            // reset progress without animating
-//            setProgress(0, false)
-//            barAnimator.setInterpolator(DecelerateInterpolator())
-//            barAnimator.addUpdateListener(AnimatorUpdateListener { animation ->
-//                val interpolation = animation.animatedValue as Float
-//                setProgress((interpolation * progress).toInt(), false)
-//            })
-//            if (!barAnimator.isStarted()) {
-//                barAnimator.start()
-//            }
+            barAnimator = ValueAnimator.ofFloat(0f, indicatorList.size.toFloat())
+            barAnimator?.duration = 700
+            // reset progress without animating
+            setProgress(index, false, 0)
+            barAnimator?.interpolator = DecelerateInterpolator()
+            barAnimator?.addUpdateListener { animation ->
+                val interpolation = animation.animatedValue as Float
+                setProgress(index, false, (interpolation * progress).toInt())
+            }
+            if (barAnimator?.isStarted != true) {
+                barAnimator?.start()
+            }
         } else {
             selectedIndex = index
+            this.progress = if (progress != 0) progress else index
             postInvalidate()
         }
     }
@@ -265,7 +278,7 @@ class ProgressIndicator @JvmOverloads constructor(
         setProgress(indicatorList.size, animate)
     }
 
-    fun selectNext(animate: Boolean = false) {
+    fun selectNext(animate: Boolean = true) {
         val tempIndex = selectedIndex + 1
         indicatorList.getOrNull(tempIndex)?.let {
             deselectAll()
@@ -279,7 +292,7 @@ class ProgressIndicator @JvmOverloads constructor(
         }
     }
 
-    fun selectBefore(animate: Boolean = false) {
+    fun selectBefore(animate: Boolean = true) {
         val tempIndex = selectedIndex - 1
         indicatorList.getOrNull(tempIndex)?.let {
             deselectAll()

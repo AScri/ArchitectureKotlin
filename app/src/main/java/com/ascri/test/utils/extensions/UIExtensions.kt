@@ -2,7 +2,10 @@ package com.ascri.test.utils.extensions
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.util.TypedValue
+import android.view.View
 import kotlin.math.roundToInt
 
 
@@ -26,4 +29,12 @@ fun Float.spToPx(context: Context): Int {
         this,
         context.resources.displayMetrics
     ).roundToInt()
+}
+
+fun View.getBitmapFromView(): Bitmap? {
+    val bitmap =
+        Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    this.draw(canvas)
+    return bitmap
 }
